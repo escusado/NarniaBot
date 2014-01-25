@@ -57,7 +57,7 @@ Class('NarniaBot')({
             app.get('/status/:status', function(req, res){
                 narniaBot.status = req.params.status;
                 narniaBot.broadCastStatus();
-                res.send('changed to: ', narniaBot.status);
+                res.send('changed to: '+ narniaBot.status);
             });
 
             return this;

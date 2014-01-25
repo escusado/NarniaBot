@@ -12,14 +12,14 @@ require('./vendor/neon.js');
 Class('NarniaBot')({
     prototype : {
         init : function (){
+            this.socket = null;
+
             this.configureApp();
             this.setRoutes();
             this.serverStart();
             this.setupSockets();
 
             this.status = false;
-
-            this.socket = null;
 
             return this;
         },
@@ -66,23 +66,23 @@ Class('NarniaBot')({
         setupSockets : function(){
             var narniaBot = this;
 
-            io.sockets.on('connection', function (socket) {
+            this.socket.on('connection', function (socket) {
 
                 // socket.on('', FlowVizProcessor.flowPushFrame);
-                narniaBot.socket = socket;
+                // narniaBot.socket = socket;
 
             });
         },
 
         broadCastStatus : function(){
             console.log('status changed: ', this.status);
-            this.socket.emit('status:change', {data:this.status});
+            this.socket.sockets.emit('status:change', {data:this.status});
         },
 
         serverStart : function(){
             console.log('Server ready'.grey);
             console.log('   app: http://localhost:'.blue+appPort.toString().magenta);
-            io = io.listen(app.listen(appPort));
+            this.socket = io.listen(app.listen(appPort));
         }
     }
 });

@@ -1,13 +1,12 @@
-var appPort = 3000,
-    socketPort = 3001;
+var appPort = process.env.PORT || 3000;
 
 //requires
 var express = require('express'),
     app     = express(),
-    io      = require('socket.io').listen(socketPort, {log:false}),
-    colors  = require('../node_modules/colors'),
+    io      = require('socket.io'),
     fs      = require('fs');
 
+require('colors');
 require('./vendor/neon.js');
 
 Class('NarniaBot')({
@@ -15,8 +14,12 @@ Class('NarniaBot')({
         init : function (){
             this.configureApp();
             this.setRoutes();
-            // this.setupSockets();
             this.serverStart();
+            this.setupSockets();
+
+            this.status = false;
+
+            this.socket = null;
 
             return this;
         },
@@ -33,7 +36,6 @@ Class('NarniaBot')({
             });
 
             app.use('/assets', express.static('assets'));
-            app.use('/scratch', express.static('scratch'));
 
             app.use(app.router);
 
@@ -41,30 +43,46 @@ Class('NarniaBot')({
         },
 
         setRoutes : function(){
-            var graphene = this;
+            var narniaBot = this;
 
             app.get('/', function(req, res){
                 res.sendfile('views/index.html');
+            });
+
+            // app.post('/status', function(req, res){
+            //     narniaBot.status = req.body.data.status;
+            //     narniaBot.broadCastStatus();
+            // });
+
+            app.get('/status/:status', function(req, res){
+                narniaBot.status = req.params.status;
+                narniaBot.broadCastStatus();
+                res.send('changed to: ', narniaBot.status);
             });
 
             return this;
         },
 
         setupSockets : function(){
-            var graphene = this;
+            var narniaBot = this;
 
             io.sockets.on('connection', function (socket) {
 
-                socket.on('flow:push:frame', FlowVizProcessor.flowPushFrame);
+                // socket.on('', FlowVizProcessor.flowPushFrame);
+                narniaBot.socket = socket;
 
             });
+        },
+
+        broadCastStatus : function(){
+            console.log('status changed: ', this.status);
+            this.socket.emit('status:change', {data:this.status});
         },
 
         serverStart : function(){
             console.log('Server ready'.grey);
             console.log('   app: http://localhost:'.blue+appPort.toString().magenta);
-            console.log('socket: http://localhost:'.green+socketPort.toString().yellow);
-            app.listen(appPort);
+            io = io.listen(app.listen(appPort));
         }
     }
 });
